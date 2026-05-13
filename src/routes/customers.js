@@ -10,7 +10,7 @@ const router = express.Router();
 router.get("/", async (req, res, next) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM customers ORDER BY id DESC"
+      "SELECT * FROM customers ORDER BY id ASC"
     );
     res.json(result.rows);
   } catch (err) {
