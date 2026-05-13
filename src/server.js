@@ -11,6 +11,9 @@ const techniciansRouter = require("./routes/technicians");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const customersRouter = require("./routes/customers");
+app.use("/api/customers", customersRouter);
+
 app.use(cors());
 app.use(express.json());
 
