@@ -4,29 +4,113 @@ const pool = require("../db");
 
 const router = express.Router();
 
-// GET /api/customers
+/* -------------------------------------------------------
+   GET ALL CUSTOMERS
+------------------------------------------------------- */
 router.get("/", async (req, res, next) => {
   try {
-    const result = await pool.query("SELECT * FROM customers ORDER BY id DESC");
+    const result = await pool.query(
+      "SELECT * FROM customers ORDER BY id DESC"
+    );
     res.json(result.rows);
   } catch (err) {
     next(err);
   }
 });
 
-// POST /api/customers
+/* -------------------------------------------------------
+   GET SINGLE CUSTOMER
+------------------------------------------------------- */
+router.get("/:id", async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM customers WHERE id = $1",
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   CREATE CUSTOMER
+------------------------------------------------------- */
 router.post("/", async (req, res, next) => {
   try {
     const { name, phone, email } = req.body;
+
     const result = await pool.query(
-      "INSERT INTO customers (name, phone, email) VALUES ($1, $2, $3) RETURNING *",
+      `INSERT INTO customers (name, phone, email)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
       [name, phone, email]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     next(err);
   }
 });
 
-module.exports = router;
+/* -------------------------------------------------------
+   UPDATE CUSTOMER
+------------------------------------------------------- */
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const fields = [];
+    const values = [];
+    let index = 1;
 
+    for (const key in req.body) {
+      fields.push(`${key} = $${index}`);
+      values.push(req.body[key]);
+      index++;
+    }
+
+    values.push(req.params.id);
+
+    const result = await pool.query(
+      `UPDATE customers
+       SET ${fields.join(", ")}
+       WHERE id = $${index}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   DELETE CUSTOMER
+------------------------------------------------------- */
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM customers WHERE id = $1 RETURNING *",
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    res.json({ message: "Customer deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
