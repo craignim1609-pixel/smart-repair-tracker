@@ -4,6 +4,10 @@ const pool = require("../db");
 
 const router = express.Router();
 
+router.get("/new", (req, res) => {
+  res.render("jobs/new");
+});
+
 /* -------------------------------------------------------
    GET ALL JOBS
 ------------------------------------------------------- */
