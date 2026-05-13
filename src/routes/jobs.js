@@ -4,15 +4,17 @@ const pool = require("../db");
 
 const router = express.Router();
 
-// GET /api/jobs
+/* -------------------------------------------------------
+   GET ALL JOBS
+------------------------------------------------------- */
 router.get("/", async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT j.*, c.name AS customer_name, t.name AS main_technician
+      `SELECT 
+          j.*,
+          c.name AS customer_name
        FROM jobs j
        LEFT JOIN customers c ON j.customer_id = c.id
-       LEFT JOIN job_technicians jt ON jt.job_id = j.id
-       LEFT JOIN technicians t ON jt.technician_id = t.id
        ORDER BY j.id DESC`
     );
     res.json(result.rows);
@@ -21,7 +23,51 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// POST /api/jobs
+/* -------------------------------------------------------
+   GET SINGLE JOB BY ID
+------------------------------------------------------- */
+router.get("/:id", async (req, res, next) => {
+  try {
+    const jobId = req.params.id;
+
+    const job = await pool.query(
+      `SELECT 
+          j.*,
+          c.name AS customer_name,
+          c.phone AS customer_phone,
+          c.email AS customer_email
+       FROM jobs j
+       LEFT JOIN customers c ON j.customer_id = c.id
+       WHERE j.id = $1`,
+      [jobId]
+    );
+
+    const parts = await pool.query(
+      "SELECT * FROM job_parts WHERE job_id = $1",
+      [jobId]
+    );
+
+    const technicians = await pool.query(
+      `SELECT jt.id, t.name, jt.minutes_worked
+       FROM job_technicians jt
+       JOIN technicians t ON jt.technician_id = t.id
+       WHERE jt.job_id = $1`,
+      [jobId]
+    );
+
+    res.json({
+      job: job.rows[0],
+      parts: parts.rows,
+      technicians: technicians.rows
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   CREATE JOB
+------------------------------------------------------- */
 router.post("/", async (req, res, next) => {
   try {
     const {
@@ -32,6 +78,8 @@ router.post("/", async (req, res, next) => {
       model,
       serial_number,
       fault_reported,
+      diagnosis,
+      fix_description,
       status,
       is_customer_job
     } = req.body;
@@ -39,8 +87,8 @@ router.post("/", async (req, res, next) => {
     const result = await pool.query(
       `INSERT INTO jobs
        (job_number, customer_id, item_type, brand, model, serial_number,
-        fault_reported, status, is_customer_job)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        fault_reported, diagnosis, fix_description, status, is_customer_job)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
       [
         job_number,
@@ -50,6 +98,8 @@ router.post("/", async (req, res, next) => {
         model || null,
         serial_number || null,
         fault_reported,
+        diagnosis || null,
+        fix_description || null,
         status || "booked_in",
         is_customer_job ?? true
       ]
@@ -61,5 +111,134 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+/* -------------------------------------------------------
+   UPDATE JOB
+------------------------------------------------------- */
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const jobId = req.params.id;
+    const fields = [];
+    const values = [];
+    let index = 1;
 
+    for (const key in req.body) {
+      fields.push(`${key} = $${index}`);
+      values.push(req.body[key]);
+      index++;
+    }
+
+    values.push(jobId);
+
+    const result = await pool.query(
+      `UPDATE jobs SET ${fields.join(", ")} WHERE id = $${index} RETURNING *`,
+      values
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   DELETE JOB
+------------------------------------------------------- */
+router.delete("/:id", async (req, res, next) => {
+  try {
+    await pool.query("DELETE FROM jobs WHERE id = $1", [req.params.id]);
+    res.json({ message: "Job deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   ADD PART TO JOB
+------------------------------------------------------- */
+router.post("/:id/parts", async (req, res, next) => {
+  try {
+    const { part_name, part_cost } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO job_parts (job_id, part_name, part_cost)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [req.params.id, part_name, part_cost]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   REMOVE PART FROM JOB
+------------------------------------------------------- */
+router.delete("/:id/parts/:partId", async (req, res, next) => {
+  try {
+    await pool.query("DELETE FROM job_parts WHERE id = $1", [
+      req.params.partId
+    ]);
+    res.json({ message: "Part removed" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   ADD TECHNICIAN TIME
+------------------------------------------------------- */
+router.post("/:id/technicians", async (req, res, next) => {
+  try {
+    const { technician_id, minutes_worked } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO job_technicians (job_id, technician_id, minutes_worked)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [req.params.id, technician_id, minutes_worked]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   UPDATE TECHNICIAN TIME
+------------------------------------------------------- */
+router.patch("/:id/technicians/:techId", async (req, res, next) => {
+  try {
+    const { minutes_worked } = req.body;
+
+    const result = await pool.query(
+      `UPDATE job_technicians
+       SET minutes_worked = $1
+       WHERE id = $2
+       RETURNING *`,
+      [minutes_worked, req.params.techId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   REMOVE TECHNICIAN FROM JOB
+------------------------------------------------------- */
+router.delete("/:id/technicians/:techId", async (req, res, next) => {
+  try {
+    await pool.query("DELETE FROM job_technicians WHERE id = $1", [
+      req.params.techId
+    ]);
+    res.json({ message: "Technician removed" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
