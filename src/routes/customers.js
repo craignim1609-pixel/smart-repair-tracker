@@ -94,6 +94,42 @@ router.patch("/:id", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
+  POST CUSTOMER
+------------------------------------------------------- */
+router.post("/", async (req, res, next) => {
+  try {
+    const { name, phone, email } = req.body;
+
+    // 1. Check if customer already exists by phone
+    const existing = await pool.query(
+      "SELECT * FROM customers WHERE phone = $1",
+      [phone]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(200).json({
+        customer: existing.rows[0],
+        message: "Customer already exists"
+      });
+    }
+
+    // 2. Insert new customer
+    const result = await pool.query(
+      "INSERT INTO customers (name, phone, email) VALUES ($1, $2, $3) RETURNING *",
+      [name, phone, email]
+    );
+
+    res.status(201).json({
+      customer: result.rows[0],
+      message: "Customer created"
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
    DELETE CUSTOMER
 ------------------------------------------------------- */
 router.delete("/:id", async (req, res, next) => {
