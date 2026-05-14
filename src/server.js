@@ -20,9 +20,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // =========================
-// UI ROUTES (Your Pages)
+// UI ROUTES (Pages)
 // =========================
 
+// Jobs UI
 app.get("/jobs", (req, res) => {
   res.render("jobs/index");
 });
@@ -31,6 +32,7 @@ app.get("/jobs/new", (req, res) => {
   res.render("jobs/new");
 });
 
+// Customers UI
 app.get("/customers", (req, res) => {
   res.render("customers/index");
 });
@@ -39,6 +41,7 @@ app.get("/customers/new", (req, res) => {
   res.render("customers/new");
 });
 
+// Technicians UI
 app.get("/technicians", (req, res) => {
   res.render("technicians/index");
 });
