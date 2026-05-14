@@ -22,6 +22,10 @@ app.use(express.static(path.join(__dirname, "public")));
 // =========================
 // UI ROUTES (Pages)
 // =========================
+//home
+app.get("/home", (req, res) => {
+  res.render("home/index");
+});
 
 // Jobs UI
 app.get("/jobs", (req, res) => {
