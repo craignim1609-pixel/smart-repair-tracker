@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All Jobs</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #0078ff;
+      color: white;
+    }
+    tr:hover {
+      background: #f0f8ff;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>All Repair Jobs</h2>
+
+  <table id="jobsTable">
+    <thead>
+      <tr>
+        <th>Job Number</th>
+        <th>Customer</th>
+        <th>Item</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+async function loadJobs() {
+  const res = await fetch("/api/jobs");
+  const jobs = await res.json();
+
+  const tbody = document.querySelector("#jobsTable tbody");
+  tbody.innerHTML = "";
+
+  jobs.forEach(job => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${job.job_number}</td>
+      <td>${job.customer_name || "Non‑Customer Job"}</td>
+      <td>${job.item_type}</td>
+      <td>${job.status}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+loadJobs();
+</script>
+
+</body>
+</html>
