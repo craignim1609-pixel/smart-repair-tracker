@@ -1,4 +1,3 @@
-// src/server.js
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -20,20 +19,46 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// UI route — Job Booking Form
+// =========================
+// UI ROUTES (Your Pages)
+// =========================
+
+app.get("/jobs", (req, res) => {
+  res.render("jobs/index");
+});
+
 app.get("/jobs/new", (req, res) => {
   res.render("jobs/new");
 });
+
+app.get("/customers", (req, res) => {
+  res.render("customers/index");
+});
+
+app.get("/customers/new", (req, res) => {
+  res.render("customers/new");
+});
+
+app.get("/technicians", (req, res) => {
+  res.render("technicians/index");
+});
+
+app.get("/technicians/new", (req, res) => {
+  res.render("technicians/new");
+});
+
+// =========================
+// API ROUTES
+// =========================
+
+app.use("/api/jobs", jobsRouter);
+app.use("/api/customers", customersRouter);
+app.use("/api/technicians", techniciansRouter);
 
 // Health check
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Smart Repair Tracker API running" });
 });
-
-// API routes
-app.use("/api/jobs", jobsRouter);
-app.use("/api/customers", customersRouter);
-app.use("/api/technicians", techniciansRouter);
 
 // 404 handler
 app.use((req, res) => {
