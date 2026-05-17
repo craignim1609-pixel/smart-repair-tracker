@@ -1,3 +1,4 @@
+// src/server.js
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -17,52 +18,22 @@ app.set("views", path.join(__dirname, "..", "views"));
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 // =========================
-// UI ROUTES (Pages)
+// UI ROUTES (ONLY HOME)
 // =========================
-//home
 app.get("/home", (req, res) => {
   res.render("home/index");
 });
 
-// Jobs UI
-app.get("/jobs", (req, res) => {
-  res.render("jobs/index");
-});
-
-app.get("/jobs/new", (req, res) => {
-  res.render("jobs/new");
-});
-
-// Customers UI
-app.get("/customers", (req, res) => {
-  res.render("customers/index");
-});
-
-app.get("/customers/new", (req, res) => {
-  res.render("customers/new");
-});
-
-// Technicians UI
-app.get("/technicians", (req, res) => {
-  res.render("technicians/index");
-});
-
-app.get("/technicians/new", (req, res) => {
-  res.render("technicians/new");
-});
-
 // =========================
-// API ROUTES
+// ROUTERS (UI + API)
 // =========================
-
-app.use("/api/jobs", jobsRouter);
-app.use("/api/customers", customersRouter);
-app.use("/api/technicians", techniciansRouter);
-app.use("/technicians", require("./routes/technicians"));
-app.use("/jobs", require("./routes/jobs"));
+app.use("/jobs", jobsRouter);
+app.use("/customers", customersRouter);
+app.use("/technicians", techniciansRouter);
 
 // Health check
 app.get("/", (req, res) => {
