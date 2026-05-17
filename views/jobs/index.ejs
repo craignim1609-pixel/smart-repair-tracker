@@ -57,34 +57,18 @@
         <th>Status</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      <% jobs.forEach(job => { %>
+        <tr>
+          <td><%= job.job_number %></td>
+          <td><%= job.customer_name || "Non‑Customer Job" %></td>
+          <td><%= job.item_type %></td>
+          <td><%= job.status %></td>
+        </tr>
+      <% }) %>
+    </tbody>
   </table>
 </div>
-
-<script>
-async function loadJobs() {
-  const res = await fetch("/api/jobs");
-  const jobs = await res.json();
-
-  const tbody = document.querySelector("#jobsTable tbody");
-  tbody.innerHTML = "";
-
-  jobs.forEach(job => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${job.job_number}</td>
-      <td>${job.customer_name || "Non‑Customer Job"}</td>
-      <td>${job.item_type}</td>
-      <td>${job.status}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
-
-loadJobs();
-</script>
 
 </body>
 </html>

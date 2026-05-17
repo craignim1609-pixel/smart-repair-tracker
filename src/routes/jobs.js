@@ -4,12 +4,15 @@ const pool = require("../db");
 
 const router = express.Router();
 
+/* -------------------------------------------------------
+   RENDER: NEW JOB FORM
+------------------------------------------------------- */
 router.get("/new", (req, res) => {
   res.render("jobs/new");
 });
 
 /* -------------------------------------------------------
-   GET ALL JOBS
+   RENDER: VIEW JOBS PAGE (HTML)
 ------------------------------------------------------- */
 router.get("/", async (req, res, next) => {
   try {
@@ -21,6 +24,27 @@ router.get("/", async (req, res, next) => {
        LEFT JOIN customers c ON j.customer_id = c.id
        ORDER BY j.id DESC`
     );
+
+    res.render("jobs/index", { jobs: result.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   API: GET ALL JOBS (JSON)
+------------------------------------------------------- */
+router.get("/api/list", async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+          j.*,
+          c.name AS customer_name
+       FROM jobs j
+       LEFT JOIN customers c ON j.customer_id = c.id
+       ORDER BY j.id DESC`
+    );
+
     res.json(result.rows);
   } catch (err) {
     next(err);
@@ -28,9 +52,9 @@ router.get("/", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   GET SINGLE JOB BY ID
+   API: GET SINGLE JOB BY ID
 ------------------------------------------------------- */
-router.get("/:id", async (req, res, next) => {
+router.get("/api/:id", async (req, res, next) => {
   try {
     const jobId = req.params.id;
 
@@ -70,9 +94,9 @@ router.get("/:id", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   CREATE JOB
+   API: CREATE JOB
 ------------------------------------------------------- */
-router.post("/", async (req, res, next) => {
+router.post("/api", async (req, res, next) => {
   try {
     const {
       job_number,
@@ -116,9 +140,9 @@ router.post("/", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   UPDATE JOB
+   API: UPDATE JOB
 ------------------------------------------------------- */
-router.patch("/:id", async (req, res, next) => {
+router.patch("/api/:id", async (req, res, next) => {
   try {
     const jobId = req.params.id;
     const fields = [];
@@ -145,9 +169,9 @@ router.patch("/:id", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   DELETE JOB
+   API: DELETE JOB
 ------------------------------------------------------- */
-router.delete("/:id", async (req, res, next) => {
+router.delete("/api/:id", async (req, res, next) => {
   try {
     await pool.query("DELETE FROM jobs WHERE id = $1", [req.params.id]);
     res.json({ message: "Job deleted" });
@@ -157,9 +181,9 @@ router.delete("/:id", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   ADD PART TO JOB
+   API: ADD PART TO JOB
 ------------------------------------------------------- */
-router.post("/:id/parts", async (req, res, next) => {
+router.post("/api/:id/parts", async (req, res, next) => {
   try {
     const { part_name, part_cost } = req.body;
 
@@ -177,9 +201,9 @@ router.post("/:id/parts", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   REMOVE PART FROM JOB
+   API: REMOVE PART FROM JOB
 ------------------------------------------------------- */
-router.delete("/:id/parts/:partId", async (req, res, next) => {
+router.delete("/api/:id/parts/:partId", async (req, res, next) => {
   try {
     await pool.query("DELETE FROM job_parts WHERE id = $1", [
       req.params.partId
@@ -191,9 +215,9 @@ router.delete("/:id/parts/:partId", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   ADD TECHNICIAN TIME
+   API: ADD TECHNICIAN TIME
 ------------------------------------------------------- */
-router.post("/:id/technicians", async (req, res, next) => {
+router.post("/api/:id/technicians", async (req, res, next) => {
   try {
     const { technician_id, minutes_worked } = req.body;
 
@@ -211,9 +235,9 @@ router.post("/:id/technicians", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   UPDATE TECHNICIAN TIME
+   API: UPDATE TECHNICIAN TIME
 ------------------------------------------------------- */
-router.patch("/:id/technicians/:techId", async (req, res, next) => {
+router.patch("/api/:id/technicians/:techId", async (req, res, next) => {
   try {
     const { minutes_worked } = req.body;
 
@@ -232,9 +256,9 @@ router.patch("/:id/technicians/:techId", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   REMOVE TECHNICIAN FROM JOB
+   API: REMOVE TECHNICIAN FROM JOB
 ------------------------------------------------------- */
-router.delete("/:id/technicians/:techId", async (req, res, next) => {
+router.delete("/api/:id/technicians/:techId", async (req, res, next) => {
   try {
     await pool.query("DELETE FROM job_technicians WHERE id = $1", [
       req.params.techId
