@@ -5,9 +5,30 @@ const pool = require("../db");
 const router = express.Router();
 
 /* -------------------------------------------------------
-   GET ALL TECHNICIANS
+   RENDER: ADD TECHNICIAN FORM (HTML)
+------------------------------------------------------- */
+router.get("/new", (req, res) => {
+  res.render("technicians/new");
+});
+
+/* -------------------------------------------------------
+   RENDER: TECHNICIANS LIST (HTML)
 ------------------------------------------------------- */
 router.get("/", async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM technicians ORDER BY id ASC"
+    );
+    res.render("technicians/index", { technicians: result.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* -------------------------------------------------------
+   API: GET ALL TECHNICIANS (JSON)
+------------------------------------------------------- */
+router.get("/api/list", async (req, res, next) => {
   try {
     const result = await pool.query(
       "SELECT * FROM technicians ORDER BY id ASC"
@@ -19,9 +40,9 @@ router.get("/", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   GET SINGLE TECHNICIAN
+   API: GET SINGLE TECHNICIAN (JSON)
 ------------------------------------------------------- */
-router.get("/:id", async (req, res, next) => {
+router.get("/api/:id", async (req, res, next) => {
   try {
     const result = await pool.query(
       "SELECT * FROM technicians WHERE id = $1",
@@ -39,29 +60,28 @@ router.get("/:id", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   CREATE TECHNICIAN
+   API: CREATE TECHNICIAN
 ------------------------------------------------------- */
 router.post("/", async (req, res, next) => {
   try {
     const { name } = req.body;
 
-    const result = await pool.query(
+    await pool.query(
       `INSERT INTO technicians (name)
-       VALUES ($1)
-       RETURNING *`,
+       VALUES ($1)`,
       [name]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.redirect("/technicians");
   } catch (err) {
     next(err);
   }
 });
 
 /* -------------------------------------------------------
-   UPDATE TECHNICIAN
+   API: UPDATE TECHNICIAN
 ------------------------------------------------------- */
-router.patch("/:id", async (req, res, next) => {
+router.patch("/api/:id", async (req, res, next) => {
   try {
     const fields = [];
     const values = [];
@@ -94,9 +114,9 @@ router.patch("/:id", async (req, res, next) => {
 });
 
 /* -------------------------------------------------------
-   DELETE TECHNICIAN
+   API: DELETE TECHNICIAN
 ------------------------------------------------------- */
-router.delete("/:id", async (req, res, next) => {
+router.delete("/api/:id", async (req, res, next) => {
   try {
     const result = await pool.query(
       "DELETE FROM technicians WHERE id = $1 RETURNING *",
