@@ -62,7 +62,7 @@ app.use("/api/jobs", jobsRouter);
 app.use("/api/customers", customersRouter);
 app.use("/api/technicians", techniciansRouter);
 app.use("/technicians", require("./routes/technicians"));
-
+app.use("/jobs", require("./routes/jobs"));
 
 // Health check
 app.get("/", (req, res) => {
