@@ -57,15 +57,24 @@
         <th>Status</th>
       </tr>
     </thead>
+
     <tbody>
-      <% jobs.forEach(job => { %>
+      <% if (jobs && jobs.length > 0) { %>
+        <% jobs.forEach(job => { %>
+          <tr>
+            <td><%= job.job_number %></td>
+            <td><%= job.customer_name || "Non‑Customer Job" %></td>
+            <td><%= job.item_type %></td>
+            <td><%= job.status %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
         <tr>
-          <td><%= job.job_number %></td>
-          <td><%= job.customer_name || "Non‑Customer Job" %></td>
-          <td><%= job.item_type %></td>
-          <td><%= job.status %></td>
+          <td colspan="4" style="text-align:center; padding:20px;">
+            No jobs found.
+          </td>
         </tr>
-      <% }) %>
+      <% } %>
     </tbody>
   </table>
 </div>
