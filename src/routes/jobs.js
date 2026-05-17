@@ -45,7 +45,7 @@ router.get("/api/list", async (req, res, next) => {
        ORDER BY j.id DESC`
     );
 
-    res.json(result.rows);
+    res.render("jobs/index", { jobs: result.rows });
   } catch (err) {
     next(err);
   }
